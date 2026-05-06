@@ -173,7 +173,7 @@ export class Livescripts {
             term.log(this.logName(),`Compiling ts->lua`)
             wsys.execIn(
                 this.mod.path.get()
-            , `${NodeExecutable} ${ipaths.node_modules.tstl_js.abs()}`
+            , `${NodeExecutable} "${ipaths.node_modules.tstl_js.abs()}"`
             )
         }
 
@@ -238,11 +238,11 @@ export class Livescripts {
             wsys.execIn(
                   `${this.mod.path.abs()}`
                 , `${NodeExecutable} --stack-trace-limit=1000 -r source-map-support/register`
-                + ` ${ipaths.bin.scripts.typescript2cxx.typescript2cxx.main_js.abs()} tsconfig.json`
+                + ` "${ipaths.bin.scripts.typescript2cxx.typescript2cxx.main_js.abs()}" tsconfig.json`
                 + ` ${(args.join(' '))}`
-                + ` --ipaths=${ipaths.abs()}`
+                + ` --ipaths="${ipaths.abs()}"`
                 + ` --datasetName=${dataset.fullName}`
-                + ` --datasetPath=${dataset.path.abs().get()}`
+                + ` --datasetPath="${dataset.path.abs().get()}"`
                 + ` ${tracyArg ? tracyArg : ''}`
                 , 'inherit'
             )

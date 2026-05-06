@@ -133,7 +133,7 @@ export class Datascripts {
                       this.logName()
                     , `Installing ${this.mod.fullName} datascript library...`
                 )
-                wsys.exec(`${NpmExecutable} i -S ${this.path.build.abs()}`)
+                wsys.exec(`${NpmExecutable} i -S "${this.path.build.abs()}"`)
             }
         }
     }
@@ -175,7 +175,7 @@ export class Datascripts {
     symlink() {
         this.path.build.package_json.writeJson(lib_package_json(this.mod.fullName))
         if(!ipaths.node_modules.join(this.mod.fullName).exists()) {
-            wsys.exec(`${NpmExecutable} i -S ${this.path.build.get()}`)
+            wsys.exec(`${NpmExecutable} i -S "${this.path.build.get()}"`)
         }
     }
 
@@ -236,10 +236,10 @@ export class Datascripts {
 
         term.log('datascripts','Linking wow data libraries...');
         try {
-            wsys.exec(`${NpmExecutable} i -S ${wowPackagePath}`)
+            wsys.exec(`${NpmExecutable} i -S "${wowPackagePath}"`)
         } catch (e) {
             term.error('datascripts', `Failed to install wow library: ${e}`);
-            term.error('datascripts', `Command was: ${NpmExecutable} i -S ${wowPackagePath}`);
+            term.error('datascripts', `Command was: ${NpmExecutable} i -S "${wowPackagePath}"`);
             term.error('datascripts', `Check that npm is on PATH (mise activated, etc.).`);
             throw e;
         }
@@ -392,11 +392,11 @@ export class Datascripts {
         try {
             wsys.exec(
                     `${NodeExecutable} -r source-map-support/register`
-                + ` ${ipaths.node_modules.wow.data.index.get()}`
+                + ` "${ipaths.node_modules.wow.data.index.get()}"`
                 + ` --ipaths=./`
-                + ` --dataset=${dataset.path.get()}`
+                + ` --dataset="${dataset.path.get()}"`
                 + ` --datasetName=${dataset.fullName}`
-                + ` --clientPatch=${dataset.client.path.Data.devPatch}`
+                + ` --clientPatch="${dataset.client.path.Data.devPatch}"`
                 + ` ${args.join(' ')}`
                 // Please don't pass these two manually
                 + ` ${writesServer?'--__writes-server':''}`
@@ -415,7 +415,7 @@ export class Datascripts {
                 && x.endsWith('-v8.log'))
             .forEach((x,i)=>{
                 wsys.exec(
-                      `${NodeExecutable} --prof-process ${x}`
+                      `${NodeExecutable} --prof-process "${x}"`
                     + ` > node-profiling${i==0?'':`-${i}`}.txt`
                 )
                 wfs.remove(x)
