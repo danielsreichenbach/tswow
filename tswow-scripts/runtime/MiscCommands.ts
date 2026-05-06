@@ -22,7 +22,10 @@ export class MiscCommands {
                 await commands.sendCommand(`build addon ${dataset.name} ${args}`)
                 // we've already built inlinescripts, skip them
                 await commands.sendCommand(`build scripts ${dataset.name} ${args} --no-inline`)
-                await commands.sendCommand(`build lua ${dataset.name} ${args} --no-inline`)
+                // The previous `build lua ...` invocation here pointed at a
+                // command that doesn't exist; `build scripts` (alias for
+                // `build livescripts`) above already runs the lua or c++
+                // backend per the module's livescripts.conf.
 
                 await Promise.all(runningClients.map(x=>x.startup(NodeConfig.AutoStartClient)))
                 let autorealms = NodeConfig.AutoStartRealms
