@@ -27,12 +27,23 @@ finish('blps', () => {
     if(!Args.hasFlag('build-blp',[process.argv])) {
         return;
     }
+    const isDebug = Args.hasFlag('debug',[process.argv]);
     const blpChanges = new FileChangeModule('blps');
     let files: {[key: string]: boolean} = {}
+    let totalProcessed = 0;
+    let totalConverted = 0;
+
+    if(isDebug) {
+        console.log('[DATASCRIPTS] Starting BLP asset processing...');
+    }
+
     ipaths.modules.module.all().forEach(basemod=>{
         basemod.endpoints().forEach(mod=>{
             if(!mod.assets.exists()) {
                 return;
+            }
+            if(isDebug) {
+                console.log(`[DATASCRIPTS] Processing assets in module: ${mod.get()}`);
             }
             mod.assets.iterate('RECURSE','BOTH','FULL',node=>{
                 if(node.isDirectory()) {
@@ -63,17 +74,27 @@ finish('blps', () => {
                 if(!node.isFile()) return;
                 let noext = node.toFile().abs().withExtension('')
                 if(files[noext.get()]) return;
+                totalProcessed++;
                 onDirtyPNG(noext,blpChanges,!wfs.exists(noext.withExtension('.blp')),png=>{
+                    if(isDebug) {
+                        console.log(`[DATASCRIPTS]   Converting: ${png.relativeTo(mod.assets).get()} -> BLP`);
+                    }
                     generateBLP(png);
                     if(!wfs.exists(png.withExtension('.blp'))) {
                         throw new Error(
                             `Failed to generate blp from ${png.abs().get()}`
                         );
                     }
+                    totalConverted++;
                 });
                 files[noext.get()] = true;
             });
         })
     })
+
+    if(isDebug && totalProcessed > 0) {
+        console.log(`[DATASCRIPTS] BLP conversion complete: ${totalConverted} converted, ${totalProcessed} candidates`);
+    }
+
     BuildTaxiMaps();
 })
