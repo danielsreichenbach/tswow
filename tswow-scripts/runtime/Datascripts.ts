@@ -261,6 +261,7 @@ export class Datascripts {
             + ' --rebuild'
             + ' --no-shutdown(-server|-client|)'
             + ' --no-restart(-server|-client|)'
+            + ' --debug'
             , 'Builds datascripts for the selected dataset'
             , async args => {
                 for(const value of Identifier.getDatasets(
@@ -359,7 +360,13 @@ export class Datascripts {
         // 4. Shutdown clients and servers
         let runningClients = shutdownsClient ? [dataset.client] : []
         let runningWorldservers = shutdownsServer ? dataset.realms() : []
+        if(runningWorldservers.length > 0) {
+            term.debug('datascripts', `Stopping ${runningWorldservers.length} worldserver(s)`);
+        }
         await Promise.all(runningWorldservers.map(x=>x.worldserver.stop()))
+        if(runningClients.length > 0) {
+            term.debug('datascripts', `Stopping ${runningClients.length} client(s)`);
+        }
         await Promise.all(runningClients.map(x=>x.kill()));
 
         // 5. Prepare dataset
@@ -371,13 +378,16 @@ export class Datascripts {
             await dataset.setupDatabases('BOTH', false);
         }
         dataset.refreshSymlinks();
-        dataset.modules().forEach(endpoint=>{
-            if(endpoint.datascripts.path.exists()) {
-                endpoint.datascripts.compile();
-                endpoint.datascripts.installLibrary()
-                ipaths.bin.include.global_d_ts
-                    .copy(endpoint.datascripts.path.global_d_ts)
-            }
+        const modulesToCompile = dataset.modules().filter(endpoint => endpoint.datascripts.path.exists());
+        if(modulesToCompile.length > 0) {
+            term.debug('datascripts', `Compiling ${modulesToCompile.length} datascript module(s)`);
+        }
+        modulesToCompile.forEach(endpoint=>{
+            term.debug('datascripts', `  - ${endpoint.fullName}`);
+            endpoint.datascripts.compile();
+            endpoint.datascripts.installLibrary()
+            ipaths.bin.include.global_d_ts
+                .copy(endpoint.datascripts.path.global_d_ts)
         });
 
         // 6. Run datascripts
@@ -389,22 +399,25 @@ export class Datascripts {
             + ` }`
         )
 
+        const buildCommand = `${NodeExecutable} --enable-source-maps`
+            + ` "${ipaths.node_modules.wow.data.index.get()}"`
+            + ` --ipaths=./`
+            + ` --dataset="${dataset.path.get()}"`
+            + ` --datasetName=${dataset.fullName}`
+            + ` --clientPatch="${dataset.client.path.Data.devPatch}"`
+            + ` ${args.join(' ')}`
+            // Please don't pass these two manually
+            + ` ${writesServer?'--__writes-server':''}`
+            + ` ${writesClient?'--__writes-client':''}`;
+        term.debug('datascripts', `Command: ${buildCommand}`);
+
         try {
-            wsys.exec(
-                    `${NodeExecutable} --enable-source-maps`
-                + ` "${ipaths.node_modules.wow.data.index.get()}"`
-                + ` --ipaths=./`
-                + ` --dataset="${dataset.path.get()}"`
-                + ` --datasetName=${dataset.fullName}`
-                + ` --clientPatch="${dataset.client.path.Data.devPatch}"`
-                + ` ${args.join(' ')}`
-                // Please don't pass these two manually
-                + ` ${writesServer?'--__writes-server':''}`
-                + ` ${writesClient?'--__writes-client':''}`
-                , 'inherit'
-            )
+            wsys.exec(buildCommand, 'inherit')
         } catch(err) {
-            term.error('datascripts',`Failed to build datascripts, see error message above`);
+            term.error('datascripts',`Failed to build datascripts: ${err}`);
+            if(err && err.stack) {
+                term.debug('datascripts', `Stack: ${err.stack}`);
+            }
             return
         }
 
