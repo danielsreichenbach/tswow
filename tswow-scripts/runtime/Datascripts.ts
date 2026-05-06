@@ -221,9 +221,27 @@ export class Datascripts {
     }
 
     static installWowLib() {
-        if(!ipaths.node_modules.wow.exists()) {
-            term.log('datascripts','Linking wow data libraries...');
-            wsys.exec(`${NpmExecutable} i -S ${ipaths.bin.scripts.wow.get()}`)
+        if(ipaths.node_modules.wow.exists()) {
+            term.debug('datascripts', 'wow module already linked, skipping install');
+            return;
+        }
+
+        const wowPackagePath = ipaths.bin.scripts.wow.get();
+        if (!wfs.exists(wowPackagePath)) {
+            throw new Error(
+                  `wow package not found at ${wowPackagePath}. `
+                + `This indicates a broken build — bin/scripts/wow should exist after a successful tswow build.`
+            );
+        }
+
+        term.log('datascripts','Linking wow data libraries...');
+        try {
+            wsys.exec(`${NpmExecutable} i -S ${wowPackagePath}`)
+        } catch (e) {
+            term.error('datascripts', `Failed to install wow library: ${e}`);
+            term.error('datascripts', `Command was: ${NpmExecutable} i -S ${wowPackagePath}`);
+            term.error('datascripts', `Check that npm is on PATH (mise activated, etc.).`);
+            throw e;
         }
     }
 
