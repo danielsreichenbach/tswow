@@ -390,14 +390,14 @@ declare interface TSPlayer extends TSUnit, TSDBJsonProvider {
      * @param items
      */
 	SendMail(senderType: uint8, from: uint64, subject: string, body: string, money? : uint32, cod? : uint32, delay? : uint32, items? : TSArray<TSItem>, itemEntries? : TSArray<TSItemEntry>);
-    
+
     /**
      * Sends a GM mail with items to this player
-     * 
+     *
      * This function creates mail from a GM/administrative sender and handles
      * the special sender object creation required for GM mail with items.
      * Similar to SendMail but for administrative purposes.
-     * 
+     *
      * @param subject The subject line of the mail
      * @param body The main body text of the mail message
      * @param items Optional array of TSItem objects to attach to the mail
@@ -4065,7 +4065,7 @@ declare interface TSMap extends TSEntityProvider, TSWorldEntityProvider<TSMap> {
 
     /**
      * Check if 2 positions are within LoS of each other, following different checks.
-     * 
+     *
      * @param x1
      * @param y1
      * @param z1
@@ -4655,7 +4655,7 @@ declare interface TSBattlegroundScore {
     SetAVGraveyardsDefended(value: uint32): void
     SetAVTowersAssaulted(value: uint32): void
     SetAVTowersDefended(value: uint32): void
-    SetAVMinesCaptured(value: uint32): void 
+    SetAVMinesCaptured(value: uint32): void
     SetSADestroyedDemolishers(value: uint32): void
     SetSADestroyedGates(value: uint32): void
     GetPlayerGUID(): uint64
@@ -6746,7 +6746,7 @@ declare interface TSUnit extends TSWorldObject {
 
     /**
      * Resets the cooldown of a specific spell
-     * @param spellId 
+     * @param spellId
      * @param update = false
      */
     ResetCooldown(spellId: uint32, update?: boolean);
@@ -6802,7 +6802,7 @@ declare interface TSUnit extends TSWorldObject {
 
     /**
      * Return angle towards point given from Unit.
-     * 
+     *
      * @param x
      * @param y
      */
@@ -9431,19 +9431,19 @@ declare class TSEvents {
 
 declare class TSDictionary<K,V> {
     [custom: string]: V;
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     set(key: K, value: V);
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     contains(key: K): boolean;
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     forEach(callback: (key: K, value: V)=>void);
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     keys(): TSArray<K>
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     reduce<T>(callback: (previous: T,key: K, value: V)=>T, initial: T) : T;
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     filter(callback: (key: K, value: V)=>boolean): TSDictionary<K,V>
-    // @ts-ignore
+    // @ts-expect-error - Index signature conflicts with method return types
     map<M>(callback: (key: K, value: V, self: TSDictionary<K,V>)=>M): TSDictionary<K,M>
 }
 
