@@ -68,6 +68,7 @@ async function initTerminal()
 
 export async function main() {
     term.log('mysql',`TSWoW Starting Up`)
+    term.debug('misc', `Process arguments: ${process.argv.join(' ')}`)
 
     if(process.argv.includes('terminal-only'))
     {
@@ -142,16 +143,19 @@ export async function main() {
     await AuthServer.initializeDatabase()
     await Realm.initialize()
     await AuthServer.initializeServer()
+    term.debug('misc', 'AuthServer initialized')
     if (process.argv.includes('realm-only'))
     {
         return initTerminal();
     }
     await Datascripts.initialize();
+    term.debug('misc', 'Datascripts initialized')
     if (process.argv.includes('data-only'))
     {
         return initTerminal();
     }
     await Livescripts.initialize();
+    term.debug('misc', 'Livescripts initialized')
     if (process.argv.includes('scripts-only'))
     {
         return initTerminal();
