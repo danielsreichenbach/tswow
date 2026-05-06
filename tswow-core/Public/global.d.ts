@@ -10183,3 +10183,33 @@ declare type ZoneCategory = uint32;
 declare function TS_ZONE_CATEGORY(color: uint32): ZoneCategory
 declare function TS_ZONE_SCOPED(cat: ZoneCategory): void
 declare function TS_ZONE_SCOPED_N(cat: ZoneCategory): void
+
+// Regular expression bindings backed by std::regex. exec() returns the first
+// matched substring (or "" on no match); capture groups are not yet exposed.
+// Flags: 'i' icase, 'g' global (recorded only — no lastIndex tracking),
+// 'm' multiline, 's' dotall (emulated by pattern rewriting since std::regex
+// has no native dotall option).
+declare class TSRegExp {
+    constructor(pattern: string);
+    constructor(pattern: string, flags: string);
+
+    test(str: string): boolean;
+    exec(str: string): string;
+    source(): string;
+
+    global(): boolean;
+    ignoreCase(): boolean;
+    multiline(): boolean;
+    dotall(): boolean;
+
+    toString(): string;
+}
+
+declare interface RegExpConstructor {
+    new(pattern: string): TSRegExp;
+    new(pattern: string, flags?: string): TSRegExp;
+    (pattern: string): TSRegExp;
+    (pattern: string, flags?: string): TSRegExp;
+}
+
+declare const RegExp: RegExpConstructor;
