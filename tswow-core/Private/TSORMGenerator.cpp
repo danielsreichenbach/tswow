@@ -19,6 +19,7 @@
 
 #include <iterator>
 #include <algorithm>
+#include <array>
 #include <string>
 #include <stdexcept>
 
@@ -46,6 +47,28 @@ std::string toLower(std::string const& str)
         , [](unsigned char c) { return std::tolower(c); }
     );
     return out;
+}
+
+// MySQL 8.0.17+ stopped reporting display width on integer types: `int(10) unsigned`
+// from older servers becomes `int unsigned`. Strip the `(N)` so ORM schema comparison
+// does not falsely detect a change every startup. See tswow/tswow#916.
+std::string normalizeColumnType(std::string const& columnType)
+{
+    static const std::array<std::string, 5> intTypes = {
+        "tinyint", "smallint", "mediumint", "int", "bigint"
+    };
+
+    std::string normalized = columnType;
+    for (const std::string& intType : intTypes)
+    {
+        size_t pos = normalized.find(intType + "(");
+        if (pos == std::string::npos) continue;
+        size_t parenStart = pos + intType.length();
+        size_t parenEnd = normalized.find(")", parenStart);
+        if (parenEnd == std::string::npos) continue;
+        normalized.erase(parenStart, parenEnd - parenStart + 1);
+    }
+    return normalized;
 }
 
 void CreateDatabaseSpec(uint32 type, std::string const& m_dbName, std::string const& m_name, std::vector<FieldSpec> m_fields)
@@ -140,7 +163,7 @@ void CreateDatabaseSpec(uint32 type, std::string const& m_dbName, std::string co
                         pkChanged = true;
                         break;
                     }
-                    else if (itr->m_typeName != eff.m_typeName || itr->m_autoIncrements != eff.m_autoIncrements)
+                    else if (normalizeColumnType(itr->m_typeName) != normalizeColumnType(eff.m_typeName) || itr->m_autoIncrements != eff.m_autoIncrements)
                     {
                         TS_LOG_INFO(
                               "tswow.orm"
@@ -205,7 +228,7 @@ void CreateDatabaseSpec(uint32 type, std::string const& m_dbName, std::string co
                     + "`;"
                 );
             }
-            else if (itr->m_typeName != old.m_typeName)
+            else if (normalizeColumnType(itr->m_typeName) != normalizeColumnType(old.m_typeName))
             {
                 // update column type
                 TS_LOG_INFO(
