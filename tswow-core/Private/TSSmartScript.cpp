@@ -187,13 +187,18 @@ TSArray<TSWorldObject> TSSmartScriptValues::GetTargets()
 
 void TSSmartScriptValues::StoreTargetList(TSArray<TSWorldObject> objects, uint32 id)
 {
-    TSObjectVector* objectsOut = new TSObjectVector(objects.get_length());
+    // Two prior bugs in one line: `new TSObjectVector(N)` leaks (the heap
+    // allocation is never freed since StoreTargetList takes a const& and
+    // copies internally), AND it default-constructs N null entries before
+    // we push_back the real ones, so we ended up with 2*N elements.
+    TSObjectVector objectsOut;
+    objectsOut.reserve(objects.get_length());
     for (size_t i = 0; i < objects.get_length(); ++i)
     {
-        objectsOut->push_back(objects[i].obj);
+        objectsOut.push_back(objects[i].obj);
     }
 #if TRINITY
-    m_script->StoreTargetList(*objectsOut, id);
+    m_script->StoreTargetList(objectsOut, id);
 #endif
 }
 
