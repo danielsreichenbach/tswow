@@ -120,6 +120,12 @@ public:
   template <typename... Args>
   void splice(size_t position, size_t size, Args... args)
   {
+    // Match TS Array.prototype.splice clamping: `position` beyond length is
+    // treated as length (no-op erase, insert at end); `size` past the end of
+    // the array is shortened to the remaining range. The previous code
+    // forwarded both directly to vec->erase, which is UB when out of range.
+    if (position > vec->size()) position = vec->size();
+    if (size > vec->size() - position) size = vec->size() - position;
     vec->erase(vec->cbegin() + position, vec->cbegin() + position + size);
     vec->insert(vec->cbegin() + position, { args... });
   }
@@ -132,6 +138,13 @@ public:
 
   TSArray slice(size_t first, size_t last)
   {
+    // Match TS Array.prototype.slice clamping: indices past the end are
+    // pulled back to length, and an inverted range yields an empty array.
+    // Without this, the previous code constructed iterators past vec->cend()
+    // (UB) when callers passed a too-large `last`.
+    if (first > vec->size()) return TSArray();
+    if (last > vec->size()) last = vec->size();
+    if (first > last) return TSArray();
     return TSArray(std::vector<T>(vec->cbegin() + first, vec->cbegin() + last));
   }
 
