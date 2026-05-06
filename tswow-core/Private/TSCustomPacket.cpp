@@ -4,13 +4,24 @@
 #include "WorldPacket.h"
 #include "CustomPacketChunk.h"
 #include "Player.h"
+#include "Log.h"
 
 #include "TSMap.h"
 #include "Map.h"
 #include "TSBattleground.h"
 
 TSPacketWrite::TSPacketWrite(CustomPacketWrite* write)
-	: write(write)
+	// Custom deleter: CustomPacketWrite::Destroy() frees the chunk byte buffers,
+	// but the heap-allocated CustomPacketWrite object header itself isn't freed
+	// by Destroy() — we have to follow up with `delete`. The previous code
+	// leaked the header (~24 bytes of metadata + the std::vector slots).
+	: write(write, [](CustomPacketWrite* w) {
+		if (w)
+		{
+			w->Destroy();
+			delete w;
+		}
+	})
 {}
 
 TSPacketRead::TSPacketRead(CustomPacketRead* read)
@@ -19,6 +30,11 @@ TSPacketRead::TSPacketRead(CustomPacketRead* read)
 
 void TSPacketWrite::SendToPlayer(TSPlayer player)
 {
+	if (!write)
+	{
+		TS_LOG_ERROR("tswow.api", "TSPacketWrite::SendToPlayer called on a null packet");
+		return;
+	}
 	auto & arr = write->buildMessages();
 	for (auto & chunk : arr)
 	{
@@ -26,12 +42,17 @@ void TSPacketWrite::SendToPlayer(TSPlayer player)
 		packet.append((uint8_t*)chunk.Data(), chunk.FullSize());
 		player.player->SendDirectMessage(&packet);
 	}
-	// remove this line if we start sending a raw pointer to worldpacket
-	write->Destroy();
+	// Cleanup happens via shared_ptr deleter when this TSPacketWrite goes out
+	// of scope; no manual Destroy() call here.
 }
 
 void TSPacketWrite::BroadcastMap(TSMap map, uint32_t teamOnly)
 {
+	if (!write)
+	{
+		TS_LOG_ERROR("tswow.api", "TSPacketWrite::BroadcastMap called on a null packet");
+		return;
+	}
 	auto& arr = write->buildMessages();
 	for (auto& chunk : arr)
 	{
@@ -48,12 +69,15 @@ void TSPacketWrite::BroadcastMap(TSMap map, uint32_t teamOnly)
 			}
 		}
 	}
-	// remove this line if we start sending a raw pointer to worldpacket
-	write->Destroy();
 }
 
 void TSPacketWrite::BroadcastAround(TSWorldObject obj, float range, bool self)
 {
+	if (!write)
+	{
+		TS_LOG_ERROR("tswow.api", "TSPacketWrite::BroadcastAround called on a null packet");
+		return;
+	}
 	auto& arr = write->buildMessages();
 	for (auto& chunk : arr)
 	{
@@ -61,8 +85,6 @@ void TSPacketWrite::BroadcastAround(TSWorldObject obj, float range, bool self)
 		packet.append((uint8_t*)chunk.Data(), chunk.FullSize());
 		obj.obj->SendMessageToSetInRange(&packet, range, self);
 	}
-	// remove this line if we start sending a raw pointer to worldpacket
-	write->Destroy();
 }
 
 TSServerBuffer::TSServerBuffer(TSPlayer player)
@@ -126,6 +148,19 @@ TSPacketWrite CreateCustomPacket(
 	, totalSize_t size
 )
 {
+	// Refuse oversized allocations from livescripts. CustomPacketWrite
+	// allocates `size` bytes up front; without this guard a malicious or
+	// buggy script could request multiple GB and exhaust the worldserver.
+	if (size > BUFFER_QUOTA)
+	{
+		TS_LOG_ERROR(
+			  "tswow.api"
+			, "CreateCustomPacket: requested size %u exceeds BUFFER_QUOTA %u"
+			, size
+			, BUFFER_QUOTA
+		);
+		return TSPacketWrite(nullptr);
+	}
 	// can we avoid heap allocation here?
 	CustomPacketWrite* write = new CustomPacketWrite(
 			opcode
