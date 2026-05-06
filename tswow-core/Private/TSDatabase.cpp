@@ -79,9 +79,9 @@ public:
     TSNumber<float> GetFloat(int index) final { return field[index].TSGet(GetFloat,float); }
     TSNumber<double> GetDouble(int index) final { return field[index].TSGet(GetDouble,double); }
 
-    std::string GetString(int index) final { 
+    std::string GetString(int index) final {
 #if TRINITY
-        return field[index].GetString(); 
+        return field[index].GetString();
 #endif
     }
 
@@ -141,9 +141,9 @@ public:
     TSNumber<float> GetFloat(int index) final { return field[index].TSGet(GetFloat,float); }
     TSNumber<double> GetDouble(int index) final { return field[index].TSGet(GetDouble,double); }
 
-    std::string GetString(int index) final { 
+    std::string GetString(int index) final {
 #if TRINITY
-        return field[index].GetString(); 
+        return field[index].GetString();
 #endif
 
     }
@@ -264,7 +264,7 @@ TSPreparedStatementBase* TSPreparedStatementBase::SetInt16(const uint8 index, co
 {
 #if TRINITY
     m_statement->setInt16(index, value);
-#endif 
+#endif
     return this;
 }
 
