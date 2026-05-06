@@ -279,7 +279,7 @@ export class Datascripts {
         ListCommand.addCommand(
             'datascripts'
             , 'dataset?'
-            , ''
+            , 'Lists all modules with datascripts, or datascripts in a specified dataset'
             , args => {
                 let isDataset = Identifier.isDataset(args[0])
                 let eps = isDataset
@@ -297,7 +297,7 @@ export class Datascripts {
         CleanCommand.addCommand(
               'datascripts'
             , 'modules'
-            , ''
+            , 'Removes datascripts build artifacts for the specified modules'
             , args => {
                 let mods = args.length === 0
                     ? Module.endpoints().filter(x=>x.datascripts.exists())
