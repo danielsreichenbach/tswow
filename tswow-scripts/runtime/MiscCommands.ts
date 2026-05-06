@@ -36,11 +36,11 @@ export class MiscCommands {
             }
         })
 
-        commands.addCommand('check','','',(args)=>{
+        commands.addCommand('check','','Checks TSWoW installation and configuration',(args)=>{
             return commands.sendCommand(`build data ${args} --readonly`)
         });
 
-        commands.addCommand('revision','','',()=>{
+        commands.addCommand('revision','','Shows TSWoW and TrinityCore revision information',()=>{
             console.log(
                   `TSWoW Revision: ${ipaths.bin.revisions.tswow.readString().slice(0,7)}\n`
                 + `TrinityCore Revision: ${ipaths.bin.revisions.trinitycore.readString().slice(0,7)}`
