@@ -3,14 +3,21 @@
 
 std::string __ts_string_substring(std::string const& str, double begin, double end)
 {
-    if (end == str.size() || end < 0)
+    // Clamp `begin` to [0, size]; below-zero or above-size values caused
+    // implicit double->size_t conversion UB or std::out_of_range from substr.
+    if (begin < 0) begin = 0;
+    if (begin > static_cast<double>(str.size())) begin = static_cast<double>(str.size());
+    const size_t start_pos = static_cast<size_t>(begin);
+
+    // Treat `end < 0` or `end >= size` as "to end of string". Otherwise clamp
+    // `end < begin` to `begin` so we always pass a non-negative length.
+    if (end < 0 || end >= static_cast<double>(str.size()))
     {
-        return str.substr(begin);
+        return str.substr(start_pos);
     }
-    else
-    {
-        return str.substr(begin, end - begin);
-    }
+    if (end < begin) end = begin;
+    const size_t end_pos = static_cast<size_t>(end);
+    return str.substr(start_pos, end_pos - start_pos);
 }
 
 std::string __ts_string_substr(std::string const& str, double start, double end)
@@ -74,10 +81,7 @@ double __ts_string_indexOf(std::string const& str, std::string const& sub)
     {
         return -1;
     }
-    else
-    {
-        return value;
-    }
+    return static_cast<double>(value);
 }
 
 double __ts_string_lastIndexOf(std::string const& str, std::string const& sub)
@@ -87,14 +91,18 @@ double __ts_string_lastIndexOf(std::string const& str, std::string const& sub)
     {
         return -1;
     }
-    else
-    {
-        return value;
-    }
+    return static_cast<double>(value);
 }
 
 std::string __ts_string_charAt(std::string const& str, double index)
 {
+    // Match TS semantics: out-of-range indices return the empty string,
+    // not a slice of the whole string (which is what fell out of the
+    // post-fix __ts_string_substring when index < 0).
+    if (index < 0 || index >= static_cast<double>(str.size()))
+    {
+        return "";
+    }
     return __ts_string_substring(str, index, index + 1);
 }
 
@@ -122,5 +130,5 @@ TSArray<std::string> __ts_string_split(std::string const& str, std::string const
 
 double __ts_string_length(std::string const& str)
 {
-    return str.size();
+    return static_cast<double>(str.size());
 }
