@@ -84,12 +84,14 @@ export namespace AuthServer {
             ,'LoginDatabaseInfo',NodeConfig.DatabaseString('auth')
         )
 
+        const authserverExe = ipaths.bin.core.pick('trinitycore').build.pick(type).authserver.get();
+        const authserverConf = ipaths.coredata.authserver.authserver_conf.get();
+        term.debug('authserver', `Starting authserver: ${authserverExe}`);
+        term.debug('authserver', `Config file: ${authserverConf}`);
+
         authserver.startIn(ipaths.coredata.authserver.get(),
-            wfs.absPath(
-                  ipaths.bin.core.pick('trinitycore').build.pick(type).authserver.get())
-                , [`-c${wfs.absPath(
-                    ipaths.coredata.authserver.authserver_conf.get()
-                )}`]
+            wfs.absPath(authserverExe)
+                , [`-c${wfs.absPath(authserverConf)}`]
             );
     }
 
