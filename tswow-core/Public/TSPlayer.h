@@ -92,7 +92,7 @@ public:
 	bool CanBlock();
 	bool CanParry();
 	bool IsInHostileArea();
-	bool IsInNoPvPArea();    
+	bool IsInNoPvPArea();
 	TSNumber<uint8> GetSpecsCount(uint32 entry, uint32 mapid, uint32 zone);
 	TSNumber<uint32> GetActiveSpec();
 	TSNumber<uint32> GetPhaseMaskForSpawn();
