@@ -203,10 +203,15 @@ TC_GAME_API TSWorldDatabaseConnection GetWorldDBConnection();
 TC_GAME_API TSAuthDatabaseConnection GetAuthDBConnection();
 TC_GAME_API TSCharactersDatabaseConnection GetCharactersDBConnection();
 
+// Raw SQL — these forward the query string to the database driver
+// unparameterized. If any part of `query` is built from livescript-supplied
+// data, use the matching PrepareWorldQuery / PrepareCharactersQuery /
+// PrepareAuthQuery instead so values are bound through prepared statements.
 TC_GAME_API std::shared_ptr<TSDatabaseResult> QueryWorld(std::string const& query);
 TC_GAME_API std::shared_ptr<TSDatabaseResult> QueryCharacters(std::string const& query);
 TC_GAME_API std::shared_ptr<TSDatabaseResult> QueryAuth(std::string const& query);
 
+// Raw SQL — same caveat as the synchronous Query* functions above.
 TC_GAME_API void QueryWorldAsync(std::string const& query);
 TC_GAME_API void QueryCharactersAsync(std::string const& query);
 TC_GAME_API void QueryAuthAsync(std::string const& query);
