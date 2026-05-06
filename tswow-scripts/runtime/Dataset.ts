@@ -209,17 +209,28 @@ export class Dataset {
 
     refreshSymlinks() {
         [this.client.path.Data,this.client.path.Data.locale()].forEach(x=>{
-            x.readDir('ABSOLUTE').forEach(y=>{
-                if(y.isSymlink()) {
-                    y.unlink();
-                }
-            })
+            const symlinks = x.readDir('ABSOLUTE').filter(y => y.isSymlink());
+            if(symlinks.length > 0) {
+                term.debug('datascripts', `Clearing ${symlinks.length} stale symlink(s) from ${x.get()}`);
+            }
+            symlinks.forEach(y => y.unlink());
         })
-        this.modules().filter(x=>x.path.assets.exists()).forEach(x=>{
-            let patches = this.client.freePatches()
+
+        const modulesWithAssets = this.modules().filter(x=>x.path.assets.exists());
+        if(modulesWithAssets.length === 0) {
+            term.debug('datascripts', `No module assets to link for dataset ${this.fullName}`);
+            return;
+        }
+
+        term.log('datascripts', `Linking ${modulesWithAssets.length} module asset folder(s) to client patches:`);
+        modulesWithAssets.forEach(x=>{
+            const patches = this.client.freePatches()
             if(patches.length === 0) {
                 throw new Error(`Client has no more free patches to symlink: ${this.client.path}`)
             }
+            const patchName = patches[0].basename().get();
+            term.log('datascripts', `  - ${x.fullName} -> ${patchName}`);
+            term.debug('datascripts', `    source: ${x.assets.path.abs().get()}`);
             wfs.symlink(x.assets.path.abs().get(),patches[0].abs().get());
         })
     }
