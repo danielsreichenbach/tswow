@@ -29,6 +29,18 @@ public:
     TSWorldPacket();
     TSWorldPacket(uint16 opcode, uint32 res = 200);
     TSWorldPacket(WorldPacket *packet);
+
+    // Rule of Five. Required because TSWorldPacket can own its WorldPacket via
+    // the `owner` flag, and previously default copy/move semantics produced two
+    // wrappers that both believed they owned the same heap pointer — leading
+    // to a double-free that the original destructor side-stepped by leaking on
+    // purpose. With explicit copy/move, owning copies deep-copy the WorldPacket
+    // so each wrapper can safely free its own.
+    TSWorldPacket(const TSWorldPacket& other);
+    TSWorldPacket(TSWorldPacket&& other) noexcept;
+    TSWorldPacket& operator=(const TSWorldPacket& other);
+    TSWorldPacket& operator=(TSWorldPacket&& other) noexcept;
+
     TSWorldPacket* operator->() { return this;}
     operator bool() const { return packet != nullptr; }
     bool operator==(TSWorldPacket const& rhs) { return packet == rhs.packet; }

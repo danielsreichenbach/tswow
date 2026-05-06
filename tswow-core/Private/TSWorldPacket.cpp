@@ -39,12 +39,78 @@ TSWorldPacket::TSWorldPacket(uint16 opcode, uint32 res)
 
 TSWorldPacket::~TSWorldPacket()
 {
-    if(this->owner)
+    // Previously this skipped delete to dodge a double-free that came from
+    // default copy semantics on an owning wrapper (see eluna). With the
+    // copy/move operators below, only one TSWorldPacket ever owns a given
+    // heap WorldPacket, so it's now safe to free here.
+    if(this->owner && this->packet)
     {
-        // TODO: why does this segfault? I'm just leaving it like this
-        // because that looks like what eluna is doing.
-        //delete this->packet;
+        delete this->packet;
+        this->packet = nullptr;
     }
+}
+
+TSWorldPacket::TSWorldPacket(const TSWorldPacket& other)
+{
+    if (other.owner && other.packet)
+    {
+        // Owning source: deep-copy the WorldPacket so each wrapper has its own
+        // heap allocation to manage.
+        this->packet = new WorldPacket(*other.packet);
+        this->owner = true;
+    }
+    else
+    {
+        // Non-owning source: share the raw pointer; lifetime is someone else's
+        // responsibility (typically a stack WorldPacket from a TC handler).
+        this->packet = other.packet;
+        this->owner = false;
+    }
+}
+
+TSWorldPacket::TSWorldPacket(TSWorldPacket&& other) noexcept
+    : packet(other.packet), owner(other.owner)
+{
+    other.packet = nullptr;
+    other.owner = false;
+}
+
+TSWorldPacket& TSWorldPacket::operator=(const TSWorldPacket& other)
+{
+    if (this != &other)
+    {
+        if (this->owner && this->packet)
+        {
+            delete this->packet;
+        }
+        if (other.owner && other.packet)
+        {
+            this->packet = new WorldPacket(*other.packet);
+            this->owner = true;
+        }
+        else
+        {
+            this->packet = other.packet;
+            this->owner = false;
+        }
+    }
+    return *this;
+}
+
+TSWorldPacket& TSWorldPacket::operator=(TSWorldPacket&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (this->owner && this->packet)
+        {
+            delete this->packet;
+        }
+        this->packet = other.packet;
+        this->owner = other.owner;
+        other.packet = nullptr;
+        other.owner = false;
+    }
+    return *this;
 }
 
 /**
