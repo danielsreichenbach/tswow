@@ -395,6 +395,33 @@ export class Realm {
             ipaths.modules.join('default/realms/realm').mkdir()
         }
 
+        // Detect duplicate realm IDs across modules. Without this the worldserver
+        // hangs with no useful error when two realm.id files map to the same id.
+        const realmIdMap: {[id: number]: string[]} = {};
+        for (const realm of Realm.all()) {
+            if (!realm.hasID()) continue;
+            const id = realm.getID();
+            if (!realmIdMap[id]) realmIdMap[id] = [];
+            realmIdMap[id].push(realm.fullName);
+        }
+        const duplicates = Object.entries(realmIdMap).filter(([, realms]) => realms.length > 1);
+        if (duplicates.length > 0) {
+            term.error('realm', '='.repeat(60));
+            term.error('realm', 'ERROR: Duplicate realm IDs detected!');
+            term.error('realm', '='.repeat(60));
+            for (const [id, realms] of duplicates) {
+                term.error('realm', `Realm ID ${id} is used by multiple modules:`);
+                for (const realmName of realms) {
+                    term.error('realm', `  - ${realmName}`);
+                }
+            }
+            term.error('realm', '');
+            term.error('realm', 'Each realm must have a unique ID. Edit the realm.id file');
+            term.error('realm', 'in one of the conflicting modules to use a different ID.');
+            term.error('realm', '='.repeat(60));
+            process.exit(1);
+        }
+
         if(
                !process.argv.includes('noac')
             && !process.argv.includes('norealm')
