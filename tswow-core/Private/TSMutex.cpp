@@ -3,9 +3,11 @@
 
 TSMutex::TSMutex() = default;
 
-// Note: for TSWorldEntity in Battlegrounds
 TSMutex::TSMutex(TSMutex const&)
 {
+    // Creates a new independent mutex; needed because TSWorldEntity is copyable
+    // (Battlegrounds path) and the default copy constructor on std::mutex is
+    // deleted.
 }
 
 void TSMutex::lock()
