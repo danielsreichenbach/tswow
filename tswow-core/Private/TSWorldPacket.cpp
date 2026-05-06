@@ -113,6 +113,29 @@ TSWorldPacket& TSWorldPacket::operator=(TSWorldPacket&& other) noexcept
     return *this;
 }
 
+bool TSWorldPacket::ValidateReadIndex(uint32 index, size_t typeSize) const
+{
+    if (!packet) return false;
+    // Guard against `index + typeSize` wrapping when `index` is near UINT32_MAX.
+    if (typeSize > 0 && index > UINT32_MAX - typeSize) return false;
+    return (static_cast<size_t>(index) + typeSize <= packet->size());
+}
+
+bool TSWorldPacket::ValidateWriteIndex(uint32 index, size_t typeSize) const
+{
+    if (!packet) return false;
+    if (typeSize > 0 && index > UINT32_MAX - typeSize) return false;
+    return (static_cast<size_t>(index) + typeSize <= packet->size());
+}
+
+void TSWorldPacket::LogBoundsViolation(const char* operation, uint32 index, size_t typeSize) const
+{
+    TS_LOG_ERROR(
+          "tswow.security"
+        , "TSWorldPacket bounds violation: {} at index {} (accessing {} bytes) exceeds packet size {} (opcode: {})"
+        , operation, index, typeSize, packet ? packet->size() : 0, packet ? packet->GetOpcode() : 0);
+}
+
 /**
  * Returns the opcode of the [WorldPacket].
  *
@@ -145,6 +168,10 @@ void TSWorldPacket::SetOpcode(uint32 opcode)
 
 TSNumber<int8> TSWorldPacket::ReadInt8(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(int8))) {
+        LogBoundsViolation("ReadInt8", index, sizeof(int8));
+        return 0;
+    }
     return packet->read<int8>(index);
 }
 TSNumber<int8> TSWorldPacket::ReadInt8()
@@ -155,6 +182,10 @@ TSNumber<int8> TSWorldPacket::ReadInt8()
 }
 void TSWorldPacket::WriteInt8(uint32 index, int8 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(int8))) {
+        LogBoundsViolation("WriteInt8", index, sizeof(int8));
+        return;
+    }
     packet->put<int8>(index, value);
 }
 void TSWorldPacket::WriteInt8(int8 value)
@@ -164,6 +195,10 @@ void TSWorldPacket::WriteInt8(int8 value)
 
 TSNumber<uint8> TSWorldPacket::ReadUInt8(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(uint8))) {
+        LogBoundsViolation("ReadUInt8", index, sizeof(uint8));
+        return 0;
+    }
     return packet->read<uint8>(index);
 }
 TSNumber<uint8> TSWorldPacket::ReadUInt8()
@@ -174,6 +209,10 @@ TSNumber<uint8> TSWorldPacket::ReadUInt8()
 }
 void TSWorldPacket::WriteUInt8(uint32 index, uint8 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(uint8))) {
+        LogBoundsViolation("WriteUInt8", index, sizeof(uint8));
+        return;
+    }
     packet->put<uint8>(index, value);
 }
 void TSWorldPacket::WriteUInt8(uint8 value)
@@ -183,6 +222,10 @@ void TSWorldPacket::WriteUInt8(uint8 value)
 
 TSNumber<int16> TSWorldPacket::ReadInt16(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(int16))) {
+        LogBoundsViolation("ReadInt16", index, sizeof(int16));
+        return 0;
+    }
     return packet->read<int16>(index);
 }
 TSNumber<int16> TSWorldPacket::ReadInt16()
@@ -193,6 +236,10 @@ TSNumber<int16> TSWorldPacket::ReadInt16()
 }
 void TSWorldPacket::WriteInt16(uint32 index, int16 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(int16))) {
+        LogBoundsViolation("WriteInt16", index, sizeof(int16));
+        return;
+    }
     packet->put<int16>(index, value);
 }
 void TSWorldPacket::WriteInt16(int16 value)
@@ -202,6 +249,10 @@ void TSWorldPacket::WriteInt16(int16 value)
 
 TSNumber<uint16> TSWorldPacket::ReadUInt16(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(uint16))) {
+        LogBoundsViolation("ReadUInt16", index, sizeof(uint16));
+        return 0;
+    }
     return packet->read<uint16>(index);
 }
 TSNumber<uint16> TSWorldPacket::ReadUInt16()
@@ -212,6 +263,10 @@ TSNumber<uint16> TSWorldPacket::ReadUInt16()
 }
 void TSWorldPacket::WriteUInt16(uint32 index, uint16 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(uint16))) {
+        LogBoundsViolation("WriteUInt16", index, sizeof(uint16));
+        return;
+    }
     packet->put<uint16>(index, value);
 }
 void TSWorldPacket::WriteUInt16(uint16 value)
@@ -221,6 +276,10 @@ void TSWorldPacket::WriteUInt16(uint16 value)
 
 TSNumber<int32> TSWorldPacket::ReadInt32(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(int32))) {
+        LogBoundsViolation("ReadInt32", index, sizeof(int32));
+        return 0;
+    }
     return packet->read<int32>(index);
 }
 TSNumber<int32> TSWorldPacket::ReadInt32()
@@ -231,6 +290,10 @@ TSNumber<int32> TSWorldPacket::ReadInt32()
 }
 void TSWorldPacket::WriteInt32(uint32 index, int32 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(int32))) {
+        LogBoundsViolation("WriteInt32", index, sizeof(int32));
+        return;
+    }
     packet->put<int32>(index, value);
 }
 void TSWorldPacket::WriteInt32(int32 value)
@@ -240,6 +303,10 @@ void TSWorldPacket::WriteInt32(int32 value)
 
 TSNumber<uint32> TSWorldPacket::ReadUInt32(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(uint32))) {
+        LogBoundsViolation("ReadUInt32", index, sizeof(uint32));
+        return 0;
+    }
     return packet->read<uint32>(index);
 }
 TSNumber<uint32> TSWorldPacket::ReadUInt32()
@@ -250,6 +317,10 @@ TSNumber<uint32> TSWorldPacket::ReadUInt32()
 }
 void TSWorldPacket::WriteUInt32(uint32 index, uint32 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(uint32))) {
+        LogBoundsViolation("WriteUInt32", index, sizeof(uint32));
+        return;
+    }
     packet->put<uint32>(index, value);
 }
 void TSWorldPacket::WriteUInt32(uint32 value)
@@ -259,6 +330,10 @@ void TSWorldPacket::WriteUInt32(uint32 value)
 
 TSNumber<int64> TSWorldPacket::ReadInt64(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(int64))) {
+        LogBoundsViolation("ReadInt64", index, sizeof(int64));
+        return 0;
+    }
     return packet->read<int64>(index);
 }
 TSNumber<int64> TSWorldPacket::ReadInt64()
@@ -269,6 +344,10 @@ TSNumber<int64> TSWorldPacket::ReadInt64()
 }
 void TSWorldPacket::WriteInt64(uint32 index, int64 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(int64))) {
+        LogBoundsViolation("WriteInt64", index, sizeof(int64));
+        return;
+    }
     packet->put<int64>(index, value);
 }
 void TSWorldPacket::WriteInt64(int64 value)
@@ -278,6 +357,10 @@ void TSWorldPacket::WriteInt64(int64 value)
 
 TSNumber<uint64> TSWorldPacket::ReadUInt64(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(uint64))) {
+        LogBoundsViolation("ReadUInt64", index, sizeof(uint64));
+        return 0;
+    }
     return packet->read<uint64>(index);
 }
 TSNumber<uint64> TSWorldPacket::ReadUInt64()
@@ -288,6 +371,10 @@ TSNumber<uint64> TSWorldPacket::ReadUInt64()
 }
 void TSWorldPacket::WriteUInt64(uint32 index, uint64 value)
 {
+    if (!ValidateWriteIndex(index, sizeof(uint64))) {
+        LogBoundsViolation("WriteUInt64", index, sizeof(uint64));
+        return;
+    }
     packet->put<uint64>(index, value);
 }
 void TSWorldPacket::WriteUInt64(uint64 value)
@@ -297,6 +384,10 @@ void TSWorldPacket::WriteUInt64(uint64 value)
 
 TSNumber<float> TSWorldPacket::ReadFloat(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(float))) {
+        LogBoundsViolation("ReadFloat", index, sizeof(float));
+        return 0.0f;
+    }
     return packet->read<float>(index);
 }
 TSNumber<float> TSWorldPacket::ReadFloat()
@@ -311,11 +402,19 @@ void TSWorldPacket::WriteFloat(float value)
 }
 void TSWorldPacket::WriteFloat(uint32 index, float value)
 {
+    if (!ValidateWriteIndex(index, sizeof(float))) {
+        LogBoundsViolation("WriteFloat", index, sizeof(float));
+        return;
+    }
     packet->put<float>(index, value);
 }
 
 TSNumber<double> TSWorldPacket::ReadDouble(uint32 index)
 {
+    if (!ValidateReadIndex(index, sizeof(double))) {
+        LogBoundsViolation("ReadDouble", index, sizeof(double));
+        return 0.0;
+    }
     return packet->read<double>(index);
 }
 TSNumber<double> TSWorldPacket::ReadDouble()
@@ -330,6 +429,10 @@ TSArray<uint8> TSWorldPacket::ReadBytes(uint32 index, uint32 size)
     TSArray<uint8> arr;
     if (size == 0)
     {
+        return arr;
+    }
+    if (!ValidateReadIndex(index, size)) {
+        LogBoundsViolation("ReadBytes", index, size);
         return arr;
     }
     arr.vec->resize(size);
@@ -351,6 +454,10 @@ TSArray<uint8> TSWorldPacket::ReadBytes(uint32 size)
 
 void TSWorldPacket::WriteBytes(uint32 index, TSArray<uint8>& vec)
 {
+    if (!ValidateWriteIndex(index, vec.get_length())) {
+        LogBoundsViolation("WriteBytes", index, vec.get_length());
+        return;
+    }
     packet->put(index, vec.vec->data(), vec.get_length());
 }
 
@@ -361,6 +468,10 @@ void TSWorldPacket::WriteBytes(TSArray<uint8>& vec)
 
 void TSWorldPacket::WriteDouble(uint32 index, double value)
 {
+    if (!ValidateWriteIndex(index, sizeof(double))) {
+        LogBoundsViolation("WriteDouble", index, sizeof(double));
+        return;
+    }
     packet->put<double>(index, value);
 }
 void TSWorldPacket::WriteDouble(double value)
@@ -376,18 +487,26 @@ std::string TSWorldPacket::ReadString()
 }
 std::string TSWorldPacket::ReadString(uint32 index)
 {
+    if (!ValidateReadIndex(index, 1)) {
+        LogBoundsViolation("ReadString", index, 1);
+        return "";
+    }
+
     std::string value = "";
-    for (int i = index; i < packet->size(); ++i)
+    // Loop bound was previously `int i < size_t size`, mixing signed and
+    // unsigned. Use uint32 throughout. Previously the loop also forgot to
+    // append `byte` to the result, so a successful read returned "".
+    for (uint32 i = index; i < packet->size(); ++i)
     {
         uint8 byte = packet->read<uint8>(i);
         if (byte == 0)
         {
             return value;
         }
+        value += static_cast<char>(byte);
     }
-    throw std::runtime_error(
-        "string at "+std::to_string(index)+" is never terminated"
-    );
+    LogBoundsViolation("ReadString (unterminated)", index, 0);
+    return value;
 }
 void TSWorldPacket::WriteString(std::string const& value)
 {
@@ -395,6 +514,10 @@ void TSWorldPacket::WriteString(std::string const& value)
 }
 void TSWorldPacket::WriteString(uint32 index, std::string const& value)
 {
+    if (!ValidateWriteIndex(index, value.length() + 1)) {
+        LogBoundsViolation("WriteString", index, value.length() + 1);
+        return;
+    }
     for (uint32 i = 0; i < value.length(); ++i)
     {
         packet->put<uint8>(index + i, value.c_str()[i]);

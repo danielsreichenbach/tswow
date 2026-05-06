@@ -53,6 +53,17 @@ public:
 
     TSArray<uint8> GetBytes();
 
+private:
+    // Bounds checks for the indexed read/write overloads. Each indexed accessor
+    // forwards `index + sizeof(T)` to `WorldPacket::read/put` which dereference
+    // a raw pointer; without these guards a malicious or buggy livescript
+    // could write past the buffer and corrupt heap memory.
+    bool ValidateReadIndex(uint32 index, size_t typeSize) const;
+    bool ValidateWriteIndex(uint32 index, size_t typeSize) const;
+    void LogBoundsViolation(const char* operation, uint32 index, size_t typeSize) const;
+
+public:
+
     bool IsNull() { return packet == nullptr; }
     bool IsEmpty();
     TSNumber<uint16> GetOpcode();
