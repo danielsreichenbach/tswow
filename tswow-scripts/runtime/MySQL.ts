@@ -122,7 +122,7 @@ export class Connection {
             return this.status;
         }
 
-        term.debug('mysql', `Connecting to mysql server ${this.cfg.host}:${this.cfg.database}:${this.cfg.database}`)
+        term.debug('mysql', `Connecting to mysql server ${this.cfg.host}:${this.cfg.port}:${this.cfg.database}`)
         const creator = mysql_lib.createConnection(this.configWithoutDb());
 
         return this.status = new Promise<void>(async (res,rej)=>{
@@ -153,7 +153,7 @@ export class Connection {
             term.error('mysql', 'Tried to disconnect from an undefined connection');
             return
         }
-        term.debug('mysql', `Disconnecting from mysql server ${this.cfg.host}:${this.cfg.database}:${this.cfg.database}`)
+        term.debug('mysql', `Disconnecting from mysql server ${this.cfg.host}:${this.cfg.port}:${this.cfg.database}`)
         return new Promise<void>((res,rej)=>{
             this.con?.end((err)=>{
                 this.con = undefined;
