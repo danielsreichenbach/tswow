@@ -391,7 +391,7 @@ export class Datascripts {
 
         try {
             wsys.exec(
-                    `${NodeExecutable} -r source-map-support/register`
+                    `${NodeExecutable} --enable-source-maps`
                 + ` "${ipaths.node_modules.wow.data.index.get()}"`
                 + ` --ipaths=./`
                 + ` --dataset="${dataset.path.get()}"`

@@ -237,7 +237,7 @@ export class Livescripts {
         try {
             wsys.execIn(
                   `${this.mod.path.abs()}`
-                , `${NodeExecutable} --stack-trace-limit=1000 -r source-map-support/register`
+                , `${NodeExecutable} --stack-trace-limit=1000 --enable-source-maps`
                 + ` "${ipaths.bin.scripts.typescript2cxx.typescript2cxx.main_js.abs()}" tsconfig.json`
                 + ` ${(args.join(' '))}`
                 + ` --ipaths="${ipaths.abs()}"`
