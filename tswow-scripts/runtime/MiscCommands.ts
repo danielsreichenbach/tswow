@@ -1,9 +1,11 @@
 import { commands } from "../util/Commands";
 import { ipaths } from "../util/Paths";
 import { term } from "../util/Terminal";
+import { AuthServer } from "./AuthServer";
 import { BuildCommand } from "./CommandActions";
 import { Identifier } from "./Identifiers";
 import { NodeConfig } from "./NodeConfig";
+import { Realm } from "./Realm";
 
 export class MiscCommands {
     static initialize() {
@@ -46,5 +48,23 @@ export class MiscCommands {
                 + `TrinityCore Revision: ${ipaths.bin.revisions.trinitycore.readString().slice(0,7)}`
             )
         }).addAlias('version')
+
+        commands.addCommand('exit','','Stops all running services and exits TSWoW', async ()=>{
+            term.log('misc', 'Shutting down all services...');
+
+            const runningRealms = Realm.all().filter(x => x.worldserver.isRunning());
+            if(runningRealms.length > 0) {
+                term.log('misc', `Stopping ${runningRealms.length} running realm(s)...`);
+                await Promise.all(runningRealms.map(x => x.worldserver.stop()));
+            }
+
+            if(AuthServer.isStarted()) {
+                term.log('misc', 'Stopping authserver...');
+                await AuthServer.stop();
+            }
+
+            term.success('misc', 'All services stopped. Goodbye!');
+            process.exit(0);
+        }).addAlias('quit')
     }
 }
