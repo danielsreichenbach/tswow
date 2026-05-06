@@ -170,4 +170,8 @@ export async function main() {
     Module.cacheEndpoints(false);
     return initTerminal();
 }
-main();
+main().catch(err => {
+    term.error('misc', `Fatal error in main(): ${err}`);
+    console.error(err);
+    process.exit(1);
+});
