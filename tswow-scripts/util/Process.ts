@@ -22,8 +22,10 @@ import { term } from './Terminal';
 import { termCustom } from "./TerminalCategories";
 
 const processes : {[key: number]: ChildProcessWithoutNullStreams} = {};
-function cleanup() {
-    for(const proc of Object.values(processes)) {
+function cleanup(reason: string) {
+    term.debug('process', `cleanup(${reason}) killing ${Object.keys(processes).length} child process(es)`);
+    for(const [pid, proc] of Object.entries(processes)) {
+        term.debug('process', `  SIGTERM -> pid ${pid}`);
         proc.kill('SIGTERM');
     }
 }
@@ -31,12 +33,11 @@ function cleanup() {
 // causes major terminal glitching
 if(!isWindows())
 {
-    process.on('exit', cleanup);
-    process.on('SIGINT', cleanup);
-    process.on('SIGUSR1', cleanup);
-    process.on('SIGUSR2', cleanup);
-    process.on('uncaughtException', cleanup);
-    process.on('SIGINT', cleanup)
+    process.on('exit',              code => cleanup(`exit(${code})`));
+    process.on('SIGINT',            ()   => cleanup('SIGINT'));
+    process.on('SIGUSR1',           ()   => cleanup('SIGUSR1'));
+    process.on('SIGUSR2',           ()   => cleanup('SIGUSR2'));
+    process.on('uncaughtException', err  => cleanup(`uncaughtException: ${err}`));
 }
 
 /**
@@ -209,6 +210,7 @@ export class Process {
             , {stdio:'pipe',cwd:resfp(directory)}
         )
         this._process = processes[proc.pid] = proc;
+        term.debug('process', `Registered ${this._name} (pid ${proc.pid})`);
         this._process.stdout.on('data', (data) => {
             this.handleOutput(data, false);
         });
@@ -229,6 +231,7 @@ export class Process {
                         && proc.pid === this._process.pid) {
                             this._process = undefined;
                         res();
+                        term.debug('process', `Unregistered ${this._name} (pid ${proc.pid})`);
                         delete processes[proc.pid]
                     }
                 }
